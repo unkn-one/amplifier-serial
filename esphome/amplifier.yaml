@@ -1,0 +1,40 @@
+uart:
+  id: uart_bus
+  baud_rate: 38400
+  rx_pin: GPIO0
+  tx_pin: GPIO1
+
+sensor:
+  - platform: amplifier_serial
+    id: amplifier
+    name: ${friendly_name}
+    uart_id: uart_bus
+    software_version_sensor:
+      name: ${friendly_name} Software Version
+      icon: mdi:information-outline
+      internal: true
+
+amplifier_serial:
+  id: amplifier
+  name: ${friendly_name}
+  uart_id: uart_bus
+  software_version_sensor:
+    name: ${friendly_name} Software Version
+    icon: mdi:information-outline
+    internal: true
+  max_volume_sensor:
+    name: ${friendly_name} Max Volume
+    unit_of_measurement: "%"
+    icon: mdi:volume-high
+    device_class: sound_pressure
+    state_class: total
+    max_value: 99
+    internal: true
+  max_streaming_volume_sensor:
+    name: ${friendly_name} Max Streaming Volume
+    unit_of_measurement: "%"
+    icon: mdi:volume-high
+    device_class: sound_pressure
+    state_class: total
+    max_value: 99
+    internal: true
