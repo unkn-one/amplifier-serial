@@ -37,6 +37,7 @@ public:
 
 protected:
   enum class State {
+	POWERED_ON,
     UNDEFINED,
     UNAVAILABLE,
     UNINITIALIZED,
@@ -45,7 +46,7 @@ protected:
     PLAYING,
   };
 
-  State state_ = State::UNDEFINED;
+  State state_ = State::POWERED_ON;
   uint8_t max_volume_ = 99;
   bool muted_ = false;
   uint32_t standby_timeout_ms_ = 20 * 60 * 1000; // 20 minutes
