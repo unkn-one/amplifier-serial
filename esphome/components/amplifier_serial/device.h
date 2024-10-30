@@ -16,6 +16,16 @@
 namespace esphome {
 namespace amplifier_serial {
 
+enum class State {
+	POWERED_ON,
+  UNDEFINED,
+  UNAVAILABLE,
+  UNINITIALIZED,
+  INITIALIZING,
+  IDLE,
+  PLAYING,
+};
+
 class AmplifierSerial : public SerialTransport, public PollingComponent, public media_player::MediaPlayer {
 public:
   AmplifierSerial(uart::UARTComponent *parent);
@@ -25,6 +35,7 @@ public:
   void setup() override;
   void update() override;
   void loop() override;
+  void dump_config() override;
 
   // MediaPlayer implementations
   media_player::MediaPlayerTraits get_traits() override;
@@ -36,16 +47,6 @@ public:
   void set_max_streaming_volume_sensor(sensor::Sensor *sensor) { this->max_streaming_volume_sensor_ = sensor; }
 
 protected:
-  enum class State {
-	POWERED_ON,
-    UNDEFINED,
-    UNAVAILABLE,
-    UNINITIALIZED,
-    INITIALIZING,
-    IDLE,
-    PLAYING,
-  };
-
   State state_ = State::POWERED_ON;
   uint8_t max_volume_ = 99;
   bool muted_ = false;
@@ -59,6 +60,8 @@ protected:
 
   void handle_frame(const ResponseFrame& frame);
 };
+
+const char* state_to_string(State state);
 
 }  // namespace amplifier_serial
 }  // namespace esphome
