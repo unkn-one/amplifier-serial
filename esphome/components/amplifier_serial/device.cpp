@@ -18,6 +18,10 @@ AmplifierSerial::AmplifierSerial(uart::UARTComponent *parent)
 void AmplifierSerial::setup() {
   SerialTransport::setup();
   this->state = media_player::MEDIA_PLAYER_STATE_IDLE;
+
+  // Register actions with the HA API
+  this->register_service(&AmplifierSerial::on_turn_on, "turn_on");
+  this->register_service(&AmplifierSerial::on_turn_off, "turn_off");
 }
 
 void AmplifierSerial::loop() {
@@ -34,6 +38,7 @@ void AmplifierSerial::dump_config() {
 
 void AmplifierSerial::update() {
   State prev_state = this->state_;
+  uint32_t idle_time = millis() - this->last_active_time_;
 
   switch (this->state_) {
 	case State::POWERED_ON:
@@ -54,6 +59,7 @@ void AmplifierSerial::update() {
       break;
 
     case State::UNINITIALIZED:
+
       this->send_command(Command::MAX_VOLUME, STATUS_REQUEST);
       this->send_command(Command::MAX_STREAMING_VOLUME, STATUS_REQUEST);
       this->send_command(Command::STANDBY_TIMEOUT, STATUS_REQUEST);
@@ -67,14 +73,14 @@ void AmplifierSerial::update() {
       break;
 
     case State::IDLE:
-      if (this->standby_timeout_ms_ > 0 && millis() - this->last_active_time_ > this->standby_timeout_ms_) {
+      if (this->standby_timeout_ms_ > 0 && idle_time > this->standby_timeout_ms_) {
         ESP_LOGI(TAG, "Turning off amplifier due to standby timeout");
         this->send_command(Command::POWER, 0x00);
         this->state_ = State::UNAVAILABLE;
         break;
       }
       else {
-        ESP_LOGVV(TAG, "Time till standby timeout: %ds", (this->standby_timeout_ms_ - (millis() - this->last_active_time_)) / 1000);
+        ESP_LOGD(TAG, "Time till standby timeout: %ds", (this->standby_timeout_ms_ - idle_time) / 1000);
       }
       [[fallthrough]]; // We want the same status updates as in playing state
 
@@ -173,13 +179,13 @@ void AmplifierSerial::handle_frame(const ResponseFrame& frame) {
     case Command::MAX_VOLUME:
       if (frame.data.size() >= 1 && max_volume_sensor_ != nullptr) {
         this->max_volume_ = std::min<uint8_t>(frame.data[0], 99);
-        max_volume_sensor_->publish_state(this->max_volume_);
+        this->max_volume_sensor_->publish_state(this->max_volume_);
       }
       break;
 
     case Command::MAX_STREAMING_VOLUME:
       if (frame.data.size() >= 1 && max_streaming_volume_sensor_ != nullptr) {
-        max_streaming_volume_sensor_->publish_state(frame.data[0]);
+        this->max_streaming_volume_sensor_->publish_state(frame.data[0]);
       }
       break;
       
@@ -208,15 +214,15 @@ void AmplifierSerial::control(const media_player::MediaPlayerCall &call) {
   if (call.get_volume().has_value()) {
     float volume = *call.get_volume();
     uint8_t volume_byte = static_cast<uint8_t>(volume * this->max_volume_);
-    send_command(Command::VOLUME, {volume_byte});
+    this->send_command(Command::VOLUME, {volume_byte});
   }
   if (call.get_command().has_value()) {
     switch (*call.get_command()) {
       case media_player::MEDIA_PLAYER_COMMAND_MUTE:
-        send_command(Command::MUTE, {0x00});
+        this->send_command(Command::MUTE, {0x00});
         break;
       case media_player::MEDIA_PLAYER_COMMAND_UNMUTE:
-        send_command(Command::MUTE, {0x01});
+        this->send_command(Command::MUTE, {0x01});
         break;
       case media_player::MEDIA_PLAYER_COMMAND_TOGGLE:
         ESP_LOGD(TAG, "Media toggle");
@@ -233,6 +239,21 @@ media_player::MediaPlayerTraits AmplifierSerial::get_traits() {
   traits.set_supports_pause(false);
   return traits;
 };
+
+void AmplifierSerial::on_turn_on() {
+  if (this->state_ == State::UNAVAILABLE) {
+    ESP_LOGD(TAG, "Turning amplifier on");
+    this->send_command(Command::POWER, 0x01);
+  }
+}
+
+void AmplifierSerial::on_turn_off() {
+  if (this->state_ >= State::IDLE) {
+    ESP_LOGD(TAG, "Turning amplifier off");
+    this->send_command(Command::POWER, 0x00);
+  }
+}
+
 
 const char* state_to_string(State state) {
   switch (state) {
