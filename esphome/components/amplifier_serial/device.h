@@ -18,7 +18,6 @@ namespace esphome {
 namespace amplifier_serial {
 
 enum class State {
-  POWERED_ON,
   UNDEFINED,
   UNAVAILABLE,
   UNINITIALIZED,
@@ -52,7 +51,7 @@ public:
   void set_max_streaming_volume_sensor(sensor::Sensor *sensor) { this->max_streaming_volume_sensor_ = sensor; }
 
 protected:
-  State state_ = State::POWERED_ON;
+  State state_ = State::UNDEFINED;
   uint8_t max_volume_ = 99;
   bool muted_ = false;
   uint32_t standby_timeout_ms_ = 20 * 60 * 1000; // 20 minutes

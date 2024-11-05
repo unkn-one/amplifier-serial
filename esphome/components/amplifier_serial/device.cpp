@@ -18,6 +18,7 @@ AmplifierSerial::AmplifierSerial(uart::UARTComponent *parent)
 void AmplifierSerial::setup() {
   SerialTransport::setup();
   this->state = media_player::MEDIA_PLAYER_STATE_IDLE;
+  this->last_active_time_ = millis();
 
   // Register actions with the HA API
   this->register_service(&AmplifierSerial::on_turn_on, "turn_on");
@@ -41,24 +42,22 @@ void AmplifierSerial::update() {
   uint32_t idle_time = millis() - this->last_active_time_;
 
   switch (this->state_) {
-	case State::POWERED_ON:
-	  // Sleep for one update
-	  // Polling for power when device is powering on sometimes reboots it in service mode or sth
-	  this->state_ = State::UNDEFINED;
-      break;
-
     case State::UNDEFINED:
+      // Sending commands when device is powering on sometimes reboots it in service mode or sth
+      if (idle_time < 1000) break;
+
       this->send_command(Command::POWER, STATUS_REQUEST);
       this->state_ = State::UNAVAILABLE;
       break;
 
     case State::UNAVAILABLE:
       // Do nothing, wait for power on frame
-      // Polling for power when device is in standby sometimes causes the device to turn on
+      // Sending commands when device is in standby sometimes causes the device to turn on
       // Also we don't know if standby communication is actually turned on in device settings
       break;
 
     case State::UNINITIALIZED:
+      if (idle_time < 1000) break;
 
       this->send_command(Command::MAX_VOLUME, STATUS_REQUEST);
       this->send_command(Command::MAX_STREAMING_VOLUME, STATUS_REQUEST);
@@ -257,8 +256,6 @@ void AmplifierSerial::on_turn_off() {
 
 const char* state_to_string(State state) {
   switch (state) {
-    case State::POWERED_ON:
-      return "Powered On";
     case State::UNDEFINED:
       return "Undefined";
     case State::UNAVAILABLE:
