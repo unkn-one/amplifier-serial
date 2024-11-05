@@ -29,7 +29,7 @@ void SerialTransport::read_available_bytes() {
   }
 }
 
-void SerialTransport::send_command(Command command_code, const std::vector<uint8_t>& data, uint8_t zone) {
+void SerialTransport::send_command(Command command_code, const vector<uint8_t>& data, uint8_t zone) {
   RequestFrame frame {
     .zone = zone,
     .command_code = command_code,
