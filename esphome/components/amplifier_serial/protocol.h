@@ -1,8 +1,11 @@
 #pragma once
 
-#include <stdint.h>
-#include <vector>
+#include <cstdint>
 #include <functional>
+#include <string>
+#include <vector>
+
+#include "units.h"
 
 // Protocol documentation:
 // https://www.jbl.com/on/demandware.static/-/Sites-masterCatalog_Harman/default/dwa1e10b13/pdfs/SH320E_RS232_SA750_iss1.pdf
@@ -68,6 +71,10 @@ enum class Answer : uint8_t {
 const uint8_t STATUS_REQUEST = 0xF0;
 const uint8_t START_CHAR = 0x21;
 const uint8_t END_CHAR = 0x0D;
+const uint16_t UART_SPEED = 38400;
+
+const uint32_t INIT_TIME = 6 * units::SECOND;
+const uint8_t MAX_VOLUME = 99;
 
 struct RequestFrame {
   uint8_t zone;

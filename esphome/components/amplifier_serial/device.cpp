@@ -9,7 +9,7 @@ namespace amplifier_serial {
 static const char *TAG = "amplifier_serial.device";
 
 AmplifierSerial::AmplifierSerial(uart::UARTComponent *parent)
-  : SerialTransport(parent), PollingComponent(15000), media_player::MediaPlayer() {
+  : SerialTransport(parent), PollingComponent(POLLING_TIME), media_player::MediaPlayer() {
   set_frame_handler([this](const ResponseFrame& frame) {
     this->handle_frame(frame);
   });
@@ -33,8 +33,8 @@ void AmplifierSerial::dump_config() {
   ESP_LOGCONFIG(TAG, "Amplifier Serial:");
   ESP_LOGCONFIG(TAG, "  State: %s", state_to_string(this->state_));
   ESP_LOGCONFIG(TAG, "  Max Volume: %d", this->max_volume_);
-  ESP_LOGCONFIG(TAG, "  Standby Timeout: %ds", this->standby_timeout_ms_ / 1000);
-  this->check_uart_settings(38400);
+  ESP_LOGCONFIG(TAG, "  Standby Timeout: %dmin", this->standby_timeout_ms_ / units::MINUTE);
+  this->check_uart_settings(UART_SPEED);
 }
 
 void AmplifierSerial::update() {
@@ -44,7 +44,7 @@ void AmplifierSerial::update() {
   switch (this->state_) {
     case State::UNDEFINED:
       // Sending commands when device is powering on sometimes reboots it in service mode or sth
-      if (idle_time < this->init_time) break;
+      if (idle_time < INIT_TIME) break;
 
       this->send_command(Command::POWER, STATUS_REQUEST);
       this->state_ = State::UNAVAILABLE;
@@ -57,7 +57,7 @@ void AmplifierSerial::update() {
       break;
 
     case State::UNINITIALIZED:
-      if (idle_time < this->init_time) break;
+      if (idle_time < INIT_TIME) break;
 
       this->send_command(Command::MAX_VOLUME, STATUS_REQUEST);
       this->send_command(Command::MAX_STREAMING_VOLUME, STATUS_REQUEST);
@@ -79,7 +79,7 @@ void AmplifierSerial::update() {
         break;
       }
       else {
-        ESP_LOGD(TAG, "Time till standby timeout: %ds", (this->standby_timeout_ms_ - idle_time) / 1000);
+        ESP_LOGD(TAG, "Time till standby timeout: %.1fmin", static_cast<float>(this->standby_timeout_ms_ - idle_time) / units::MINUTE);
       }
       [[fallthrough]]; // We want the same status updates as in playing state
 
@@ -147,7 +147,7 @@ void AmplifierSerial::handle_frame(const ResponseFrame& frame) {
     case Command::STANDBY_TIMEOUT:
       if (frame.data.size() >= 1) {
         this->standby_timeout_ms_ = standby_timeout_to_ms(frame.data[0]);
-        ESP_LOGD(TAG, "Standby timeout set to: %ds", this->standby_timeout_ms_ / 1000);
+        ESP_LOGD(TAG, "Standby timeout set to: %.1fmin", static_cast<float>(this->standby_timeout_ms_) / units::MINUTE);
       }
       break;
 

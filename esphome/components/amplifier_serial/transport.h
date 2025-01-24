@@ -8,12 +8,15 @@
 #include "esphome/core/hal.h"
 #include "esphome/components/uart/uart.h"
 #include "protocol.h"
+#include "units.h"
 
 using namespace std;
 using namespace esphome::uart;
 
 namespace esphome {
 namespace amplifier_serial {
+
+const uint32_t FRAME_TIMEOUT_MS = 3 * units::SECOND;
 
 class SerialTransport : public UARTDevice {
  public:
@@ -30,7 +33,6 @@ class SerialTransport : public UARTDevice {
   FrameHandler frame_handler_;
   unordered_set<Command> unsupported_commands_;
   uint32_t last_byte_time_ = 0;
-  static const uint32_t FRAME_TIMEOUT_MS = 3000;
 
   void read_available_bytes();
   bool handle_frame(const ResponseFrame& frame);
