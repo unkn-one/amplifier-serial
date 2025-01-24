@@ -29,7 +29,13 @@ void SerialTransport::read_available_bytes() {
   }
 }
 
-void SerialTransport::send_command(Command command_code, const vector<uint8_t>& data, uint8_t zone) {
+bool SerialTransport::send_command(Command command_code, const vector<uint8_t>& data, uint8_t zone) {
+  if (unsupported_commands_.count(command_code)) {
+    ESP_LOGD(TAG, "Not sending unsupported command: %s (%02X)", 
+             command_to_string(command_code), static_cast<uint8_t>(command_code));
+    return false;
+  }
+  
   RequestFrame frame {
     .zone = zone,
     .command_code = command_code,
@@ -41,6 +47,8 @@ void SerialTransport::send_command(Command command_code, const vector<uint8_t>& 
            to_hex_string(frame.data).c_str(), frame.zone);  
 
   this->write_array(this->frame_handler_.serialize_frame(frame));
+
+  return true;
 }
 
 bool SerialTransport::handle_frame(const ResponseFrame& frame) {
