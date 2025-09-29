@@ -7,6 +7,7 @@
 
 #include "esphome.h"
 #include "esphome/core/component.h"
+#include "esphome/components/api/custom_api_device.h"
 #include "esphome/components/media_player/media_player.h"
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/components/text_sensor/text_sensor.h"
@@ -17,7 +18,7 @@ namespace esphome {
 namespace amplifier_serial {
 
 enum class State {
-	POWERED_ON,
+  POWERED_ON,
   UNDEFINED,
   UNAVAILABLE,
   UNINITIALIZED,
@@ -26,7 +27,10 @@ enum class State {
   PLAYING,
 };
 
-class AmplifierSerial : public SerialTransport, public PollingComponent, public media_player::MediaPlayer {
+class AmplifierSerial : public SerialTransport, 
+                        public PollingComponent, 
+                        public media_player::MediaPlayer,
+                        public api::CustomAPIDevice {
 public:
   AmplifierSerial(uart::UARTComponent *parent);
 
@@ -41,6 +45,7 @@ public:
   media_player::MediaPlayerTraits get_traits() override;
   void control(const media_player::MediaPlayerCall &call) override;
   bool is_muted() const override { return this->muted_; }
+  bool is_on() const { return this->state_ >= State::IDLE; }
 
   void set_software_version_sensor(text_sensor::TextSensor *sensor) { this->software_version_sensor_ = sensor; }
   void set_max_volume_sensor(sensor::Sensor *sensor) { this->max_volume_sensor_ = sensor; }
@@ -59,6 +64,9 @@ protected:
   sensor::Sensor *max_streaming_volume_sensor_{nullptr};
 
   void handle_frame(const ResponseFrame& frame);
+
+  void on_turn_on();
+  void on_turn_off();
 };
 
 const char* state_to_string(State state);
