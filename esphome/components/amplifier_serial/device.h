@@ -3,12 +3,11 @@
 #include <cstdint>
 #include <string>
 
-#include "esphome.h"
-#include "esphome/core/component.h"
 #include "esphome/components/api/custom_api_device.h"
 #include "esphome/components/media_player/media_player.h"
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/components/text_sensor/text_sensor.h"
+#include "esphome/core/component.h"
 #include "protocol.h"
 #include "transport.h"
 #include "units.h"
@@ -28,9 +27,9 @@ enum class State {
 };
 
 class AmplifierSerial : public SerialTransport, 
-                        public PollingComponent, 
                         public media_player::MediaPlayer,
-                        public api::CustomAPIDevice {
+                        public api::CustomAPIDevice,
+                        public PollingComponent {
 public:
   AmplifierSerial(uart::UARTComponent *parent);
 

@@ -1,5 +1,5 @@
-#include "transport.h"
 #include "esphome/core/log.h"
+#include "transport.h"
 
 namespace esphome {
 namespace amplifier_serial {

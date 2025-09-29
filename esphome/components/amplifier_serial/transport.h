@@ -4,9 +4,9 @@
 #include <unordered_set>
 #include <vector>
 
+#include "esphome/components/uart/uart.h"
 #include "esphome/core/component.h"
 #include "esphome/core/hal.h"
-#include "esphome/components/uart/uart.h"
 #include "protocol.h"
 #include "units.h"
 

@@ -9,7 +9,7 @@ namespace amplifier_serial {
 static const char *TAG = "amplifier_serial.device";
 
 AmplifierSerial::AmplifierSerial(uart::UARTComponent *parent)
-  : SerialTransport(parent), PollingComponent(POLLING_TIME), media_player::MediaPlayer() {
+  : SerialTransport(parent), media_player::MediaPlayer(), CustomAPIDevice(), PollingComponent(POLLING_TIME) {
   set_frame_handler([this](const ResponseFrame& frame) {
     this->handle_frame(frame);
   });

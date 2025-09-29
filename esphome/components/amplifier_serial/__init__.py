@@ -1,6 +1,6 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import uart, media_player, sensor, text_sensor
+from esphome.components import media_player, sensor, text_sensor, uart
 from esphome.const import CONF_ID, CONF_UPDATE_INTERVAL, UNIT_PERCENT
 
 DEPENDENCIES = ["uart"]
@@ -10,7 +10,10 @@ MULTI_CONF = True
 amplifier_serial_ns = cg.esphome_ns.namespace("amplifier_serial")
 SerialTransport = amplifier_serial_ns.class_("SerialTransport", uart.UARTDevice)
 AmplifierSerial = amplifier_serial_ns.class_(
-    "AmplifierSerial", SerialTransport, cg.PollingComponent, media_player.MediaPlayer
+    "AmplifierSerial",
+    SerialTransport,
+    media_player.MediaPlayer,
+    cg.PollingComponent,
 )
 
 CONF_SOFTWARE_VERSION_SENSOR = "software_version_sensor"
@@ -18,7 +21,7 @@ CONF_MAX_VOLUME_SENSOR = "max_volume_sensor"
 CONF_MAX_STREAMING_VOLUME_SENSOR = "max_streaming_volume_sensor"
 
 CONFIG_SCHEMA = (
-    cv.Schema({
+    media_player.media_player_schema(AmplifierSerial).extend({
         cv.GenerateID(): cv.declare_id(AmplifierSerial),
         cv.Optional(CONF_UPDATE_INTERVAL, default="15s"): cv.update_interval,
         cv.Optional(CONF_SOFTWARE_VERSION_SENSOR): text_sensor.text_sensor_schema(),
@@ -27,7 +30,6 @@ CONFIG_SCHEMA = (
     })
     .extend(uart.UART_DEVICE_SCHEMA)
     .extend(cv.polling_component_schema('15s'))
-    .extend(media_player.MEDIA_PLAYER_SCHEMA)
 )
 
 async def to_code(config):
