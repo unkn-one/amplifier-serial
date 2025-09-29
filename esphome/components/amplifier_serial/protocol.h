@@ -53,7 +53,7 @@ enum class Command : uint8_t {
   MAX_VOLUME             = 0x66, // Set or request the maximum volume level to prevent volume being accidentally set to full
   MAX_STREAMING_VOLUME   = 0x67, // Set or request the maximum volume level when playing back streamed content
   DARK_MODE              = 0x68, // Set or request the status of the dark mode function
-  INTERNAL_BOOT_LOG      = 0xF3, // Shows the internal boot log
+  SERVICE_DATA           = 0xF3, // Shows the service data
 };
 
 enum class Answer : uint8_t {

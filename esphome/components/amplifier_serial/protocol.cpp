@@ -86,8 +86,8 @@ const char* command_to_string(Command command_code) {
       return "Max Streaming Volume";
     case Command::DARK_MODE:
       return "Dark Mode";
-    case Command::INTERNAL_BOOT_LOG:
-      return "Internal Boot Log";
+    case Command::SERVICE_DATA:
+      return "Service Data";
     default:
       return "Unknown command code";
   }
