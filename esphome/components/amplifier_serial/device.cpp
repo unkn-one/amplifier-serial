@@ -24,8 +24,15 @@ void AmplifierSerial::loop() {
   SerialTransport::loop();
 }
 
+void AmplifierSerial::dump_config() {
+  ESP_LOGCONFIG(TAG, "Amplifier Serial:");
+  ESP_LOGCONFIG(TAG, "  State: %s", state_to_string(this->state_));
+  ESP_LOGCONFIG(TAG, "  Max Volume: %d", this->max_volume_);
+  ESP_LOGCONFIG(TAG, "  Standby Timeout: %ds", this->standby_timeout_ms_ / 1000);
+  this->check_uart_settings(38400);
+}
+
 void AmplifierSerial::update() {
-  //ESP_LOGVV(TAG, "Current state: %d", this->state_);
   State prev_state = this->state_;
 
   switch (this->state_) {
@@ -58,6 +65,7 @@ void AmplifierSerial::update() {
     case State::INITIALIZING:
       // Do nothing, wait for system status frame to proceed
       break;
+
     case State::IDLE:
       if (this->standby_timeout_ms_ > 0 && millis() - this->last_active_time_ > this->standby_timeout_ms_) {
         ESP_LOGI(TAG, "Turning off amplifier due to standby timeout");
@@ -79,7 +87,7 @@ void AmplifierSerial::update() {
   }
 
   if (prev_state != this->state_) {
-    ESP_LOGD(TAG, "Device state changed: %d -> %d", prev_state, this->state_);
+    ESP_LOGD(TAG, "Device state changed: %s -> %s", state_to_string(prev_state), state_to_string(this->state_));
   }
 }
 
@@ -132,6 +140,7 @@ void AmplifierSerial::handle_frame(const ResponseFrame& frame) {
     case Command::STANDBY_TIMEOUT:
       if (frame.data.size() >= 1) {
         this->standby_timeout_ms_ = standby_timeout_to_ms(frame.data[0]);
+        ESP_LOGD(TAG, "Standby timeout set to: %ds", this->standby_timeout_ms_ / 1000);
       }
       break;
 
@@ -174,7 +183,7 @@ void AmplifierSerial::handle_frame(const ResponseFrame& frame) {
       }
       break;
       
-    case Command::INTERNAL_BOOT_LOG:
+    case Command::SERVICE_DATA:
       if (frame.data.size() >= 5) {
         uint8_t offset = 4;
         uint16_t f_type = frame.data[0] & frame.data[1] << 8;
@@ -189,7 +198,7 @@ void AmplifierSerial::handle_frame(const ResponseFrame& frame) {
   }
 
   if (prev_state != this->state_) {
-    ESP_LOGD(TAG, "Device state changed: %d -> %d", prev_state, this->state_);
+    ESP_LOGD(TAG, "Device state changed: %s -> %s", state_to_string(prev_state), state_to_string(this->state_));
   }
 
   this->publish_state(); // MediaPlayer state update
@@ -224,6 +233,28 @@ media_player::MediaPlayerTraits AmplifierSerial::get_traits() {
   traits.set_supports_pause(false);
   return traits;
 };
+
+const char* state_to_string(State state) {
+  switch (state) {
+    case State::POWERED_ON:
+      return "Powered On";
+    case State::UNDEFINED:
+      return "Undefined";
+    case State::UNAVAILABLE:
+      return "Unavailable";
+    case State::UNINITIALIZED:
+      return "Uninitialized";
+    case State::INITIALIZING:
+      return "Initializing";
+    case State::IDLE:
+      return "Idle";
+    case State::PLAYING:
+      return "Playing";
+    default:
+      return "Unknown";
+  }
+}
+
 
 }  // namespace amplifier_serial
 }  // namespace esphome
