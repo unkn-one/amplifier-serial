@@ -1,5 +1,5 @@
-#include "protocol.h"
 #include "esphome/core/log.h"
+#include "protocol.h"
 
 namespace esphome {
 namespace amplifier_serial {
@@ -144,13 +144,13 @@ uint32_t standby_timeout_to_ms(uint8_t timeout_value) {
     case 0x00:
       return 0;  // Off
     case 0x01:
-      return 20 * 60 * 1000;  // 20 minutes
+      return 20 * units::MINUTE;
     case 0x02:
-      return 60 * 60 * 1000;  // 1 hour
+      return 60 * units::MINUTE;
     case 0x03:
-      return 2 * 60 * 60 * 1000;  // 2 hours
+      return 2 * units::HOUR;
     case 0x04:
-      return 4 * 60 * 60 * 1000;  // 4 hours
+      return 4 * units::HOUR;
     default:
       return 0;  // Unknown value, return 0 (Off)
   }

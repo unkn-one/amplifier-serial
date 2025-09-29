@@ -11,9 +11,12 @@
 #include "esphome/components/text_sensor/text_sensor.h"
 #include "protocol.h"
 #include "transport.h"
+#include "units.h"
 
 namespace esphome {
 namespace amplifier_serial {
+
+const uint32_t POLLING_TIME = 15000;
 
 enum class State {
   UNDEFINED,
@@ -50,11 +53,10 @@ public:
 
 protected:
   State state_ = State::UNDEFINED;
-  uint8_t max_volume_ = 99;
+  uint8_t max_volume_ = MAX_VOLUME;
   bool muted_ = false;
-  uint32_t standby_timeout_ms_ = 20 * 60 * 1000; // 20 minutes
+  uint32_t standby_timeout_ms_ = 20 * units::MINUTE;
   uint32_t last_active_time_ = 0;
-  uint32_t init_time = 6 * 1000;
 
   text_sensor::TextSensor *software_version_sensor_{nullptr};
 
