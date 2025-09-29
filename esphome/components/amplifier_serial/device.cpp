@@ -29,6 +29,12 @@ void AmplifierSerial::update() {
   State prev_state = this->state_;
 
   switch (this->state_) {
+	case State::POWERED_ON:
+	  // Sleep for one update
+	  // Polling for power when device is powering on sometimes reboots it in service mode or sth
+	  this->state_ = State::UNDEFINED;
+      break;
+
     case State::UNDEFINED:
       this->send_command(Command::POWER, STATUS_REQUEST);
       this->state_ = State::UNAVAILABLE;
@@ -37,7 +43,7 @@ void AmplifierSerial::update() {
     case State::UNAVAILABLE:
       // Do nothing, wait for power on frame
       // Polling for power when device is in standby sometimes causes the device to turn on
-      // Also we dont know if standby communication is actually turned on in device settings
+      // Also we don't know if standby communication is actually turned on in device settings
       break;
 
     case State::UNINITIALIZED:
